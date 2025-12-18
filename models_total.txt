@@ -1,0 +1,102 @@
+from django.db import models
+
+# Create your models here.
+
+
+class Category(models.Model):
+    name = models.CharField(max_length=200)
+    description = models.TextField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["name"]
+
+    def __str__(self):
+        return self.name
+
+
+
+
+
+class Buyer(models.Model):
+    name = models.CharField(max_length=100)
+    cnpj = models.CharField(max_length=20, null=True, blank=True)
+    contact = models.CharField(max_length=100, null=True, blank=True)
+
+    class Meta:
+        ordering = ["name"]
+
+    def __str__(self):
+        return self.name
+
+
+from django.db import models
+from buyers.models import Buyer
+from django.contrib.auth.models import User
+
+# Create your models here.
+
+
+class Inflow(models.Model):
+    TYPE_PAYMENTS_CHOICES = (
+        ('PIX', 'PIX'),
+        ('Diheiro', 'Dinheiro'),
+        ('Cartão', 'Cartão'),
+    )
+    buyer = models.ForeignKey(Buyer, on_delete=models.CASCADE, 
+        related_name="inflows",blank=True, null=True
+    )
+    value = models.FloatField()
+    date = models.DateTimeField()
+    type_payment = models.CharField(max_length=20, 
+        choices=TYPE_PAYMENTS_CHOICES
+        )
+    user = models.ForeignKey(User, on_delete=models.DO_NOTHING,
+        related_name="inflow_created_by", null=True
+    )
+    description = models.TextField(max_length=500, blank=True, null=True)
+    created_on = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_on']
+
+    def __str__(self):
+        return f"{self.user} criou uma venda para {self.buyer} de R${self.value} no dia {self.date.strftime('Y%-%m-%d')}"
+
+
+
+from django.db import models
+from categories.models import Category
+from django.contrib.auth.models import User
+
+# Create your models here.
+
+
+class Outflow(models.Model):
+    TYPE_PAYMENTS_CHOICES = (
+        ('PIX', 'PIX'),
+        ('Diheiro', 'Dinheiro'),
+        ('Cartão', 'Cartão'),
+    )
+
+    category = models.ForeignKey( Category, on_delete=models.PROTECT,
+        related_name="outflow", blank=True, null=True
+    )
+    name = models.CharField(max_length=30)
+    value = models.FloatField()
+    date = models.DateTimeField()
+    type_payment = models.CharField(max_length=20, choices=TYPE_PAYMENTS_CHOICES)
+    user = models.ForeignKey(User, on_delete=models.DO_NOTHING,
+        related_name="outflow_created_by", blank=True, null=True
+    )
+    description = models.TextField(max_length=500, blank=True, null=True)
+    created_on = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_on']
+
+    def __str__(self):
+        return f"{self.user} registrou p pagamento {self.category} no dia {self.date.strftime('Y%-%m-%d')}"
